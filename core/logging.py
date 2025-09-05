@@ -84,7 +84,7 @@ def setup_logging() -> None:
 
     # File handler (JSON structured)
     file_handler = logging.handlers.RotatingFileHandler(
-        settings.LOG_FILE,
+        str(log_file),
         maxBytes=10 * 1024 * 1024,  # 10MB
         backupCount=5,
         encoding="utf-8",
