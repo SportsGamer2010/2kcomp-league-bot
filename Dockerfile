@@ -28,15 +28,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Create data directories for persistent storage
+RUN mkdir -p /app/data /tmp/data
+
 # Create non-root user for security
 RUN groupadd -r botuser && useradd -r -g botuser botuser \
-    && chown -R botuser:botuser /app
+    && chown -R botuser:botuser /app /tmp/data
 
 # Switch to non-root user
 USER botuser
-
-# Create data directory for persistent storage
-RUN mkdir -p /app/data && chown botuser:botuser /app/data
 
 # Expose port (if needed for health checks)
 EXPOSE 8080

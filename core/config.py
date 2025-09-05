@@ -39,10 +39,10 @@ class Settings(BaseSettings):
 
     # File paths
     STATE_PATH: str = Field(
-        default="/data/state.json", description="Path to state persistence file"
+        default="/tmp/data/state.json", description="Path to state persistence file"
     )
     RECORDS_SEED_PATH: str = Field(
-        default="/data/records_seed.json", description="Path to records seed file"
+        default="/tmp/data/records_seed.json", description="Path to records seed file"
     )
 
     # Record thresholds
