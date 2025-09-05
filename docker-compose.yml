@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build: .
+    container_name: 2kcomp-league-bot
+    restart: unless-stopped
+    environment:
+      # Discord Bot Configuration
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+      - DISCORD_ANNOUNCEMENT_CHANNEL_ID=${DISCORD_ANNOUNCEMENT_CHANNEL_ID}
+      - DISCORD_HISTORY_CHANNEL_ID=${DISCORD_HISTORY_CHANNEL_ID}
+      - DISCORD_LEADERS_CHANNEL_ID=${DISCORD_LEADERS_CHANNEL_ID}
+      - DISCORD_RECORDS_CHANNEL_ID=${DISCORD_RECORDS_CHANNEL_ID}
+      - DISCORD_MILESTONES_CHANNEL_ID=${DISCORD_MILESTONES_CHANNEL_ID}
+      
+      # SportsPress API Configuration
+      - SPORTSPRESS_BASE=${SPORTSPRESS_BASE}
+      - SPORTSPRESS_API_KEY=${SPORTSPRESS_API_KEY}
+      - SPORTSPRESS_LEAGUE_ID=${SPORTSPRESS_LEAGUE_ID}
+      - SPORTSPRESS_SEASON_ID=${SPORTSPRESS_SEASON_ID}
+      - LEADERS_ENDPOINT=${LEADERS_ENDPOINT}
+      
+      # Bot Configuration
+      - BOT_PREFIX=${BOT_PREFIX:-!}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-300}
+      
+      # Milestone Configuration
+      - MIN_FGA_FOR_FG_PERCENT=${MIN_FGA_FOR_FG_PERCENT:-10}
+      - MIN_3PA_FOR_3P_PERCENT=${MIN_3PA_FOR_3P_PERCENT:-5}
+      
+      # File Paths
+      - RECORDS_SEED_PATH=${RECORDS_SEED_PATH:-data/records_seed.json}
+      - STATE_FILE_PATH=${STATE_FILE_PATH:-data/state.json}
+      
+      # HTTP Client Configuration
+      - HTTP_TIMEOUT=${HTTP_TIMEOUT:-30}
+      - HTTP_MAX_RETRIES=${HTTP_MAX_RETRIES:-3}
+      - HTTP_RATE_LIMIT_DELAY=${HTTP_RATE_LIMIT_DELAY:-1}
+    
+    volumes:
+      # Persistent data storage
+      - ./data:/app/data
+      # Environment file (optional)
+      - ./.env:/app/.env:ro
+    
+    networks:
+      - bot-network
+    
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  bot-network:
+    driver: bridge
+    name: 2kcomp-league-network
+
+volumes:
+  bot-data:
+    driver: local

@@ -1,0 +1,105 @@
+# 2KCompLeague Discord Bot - Deployment Configuration
+# This file defines deployment settings for different environments
+
+version: '1.0'
+
+environments:
+  development:
+    description: "Local development environment"
+    docker_compose: "docker-compose.yml"
+    health_check_port: 8080
+    log_level: "DEBUG"
+    backup_enabled: false
+    monitoring_enabled: false
+    auto_restart: false
+    
+  staging:
+    description: "Staging environment for testing"
+    docker_compose: "docker-compose.yml"
+    health_check_port: 8080
+    log_level: "INFO"
+    backup_enabled: true
+    monitoring_enabled: true
+    auto_restart: true
+    resource_limits:
+      memory: "512M"
+      cpu: "0.5"
+    
+  production:
+    description: "Production environment"
+    docker_compose: "docker-compose.prod.yml"
+    health_check_port: 8080
+    log_level: "WARNING"
+    backup_enabled: true
+    monitoring_enabled: true
+    auto_restart: true
+    resource_limits:
+      memory: "1G"
+      cpu: "1.0"
+    security:
+      read_only_root: true
+      no_new_privileges: true
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
+
+deployment:
+  backup:
+    retention_days: 30
+    compression: true
+    include_data: true
+    include_logs: true
+    
+  health_checks:
+    interval_seconds: 60
+    timeout_seconds: 10
+    max_failures: 3
+    recovery_actions:
+      - "restart_container"
+      - "send_alert"
+      - "create_backup"
+      
+  monitoring:
+    prometheus_enabled: true
+    grafana_enabled: true
+    alerting_enabled: true
+    metrics_retention: "200h"
+    
+  notifications:
+    discord_webhook: "${DISCORD_WEBHOOK_URL}"
+    email_recipient: "${EMAIL_RECIPIENT}"
+    alert_levels:
+      - "critical"
+      - "warning"
+      - "info"
+
+ci_cd:
+  github_actions:
+    enabled: true
+    branches:
+      - "main"
+      - "develop"
+    environments:
+      staging: "staging"
+      production: "production"
+      
+  security_scanning:
+    bandit: true
+    safety: true
+    dependency_check: true
+    
+  testing:
+    unit_tests: true
+    integration_tests: true
+    coverage_threshold: 95
+    performance_tests: true
+
+rollback:
+  enabled: true
+  max_versions: 5
+  automatic_rollback: false
+  rollback_triggers:
+    - "health_check_failure"
+    - "error_rate_threshold"
+    - "response_time_threshold"

@@ -1,0 +1,58 @@
+{
+  "points": {
+    "stat": "points",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  },
+  "rebounds": {
+    "stat": "rebounds",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  },
+  "assists": {
+    "stat": "assists",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  },
+  "steals": {
+    "stat": "steals",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  },
+  "blocks": {
+    "stat": "blocks",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  },
+  "threes_made": {
+    "stat": "threes_made",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  },
+  "fg_percent": {
+    "stat": "fg_percent",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  },
+  "threep_percent": {
+    "stat": "threep_percent",
+    "value": 0.0,
+    "holder": "No Record Set",
+    "game": "No Game",
+    "date": "2024-01-01"
+  }
+}

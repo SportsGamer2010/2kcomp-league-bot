@@ -1,0 +1,1153 @@
+name: Docker Publish
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+```
+
+```markdown:discord-bot/DEPLOYMENT_GUIDE.md
+# 2KCompLeague Discord Bot - Deployment Guide
+
+## Quick Start with Docker
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Discord Bot Token
+- Discord Guild (Server) ID
+- Channel IDs for announcements
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/yourusername/2kcomp-league-bot.git
+cd 2kcomp-league-bot
+```
+
+### 2. Environment Setup
+```bash
+# Copy the example environment file
+cp env.example .env
+
+# Edit the environment file with your values
+nano .env
+```
+
+### 3. Required Environment Variables
+```env
+# Discord Configuration
+DISCORD_TOKEN=your_discord_bot_token_here
+GUILD_ID=your_guild_id_here
+ANNOUNCE_CHANNEL_ID=your_announce_channel_id_here
+HISTORY_CHANNEL_ID=your_history_channel_id_here
+
+# SportsPress API
+SPORTSPRESS_BASE=https://2kcompleague.com/wp-json/sportspress/v2
+```
+
+### 4. Run with Docker Compose
+```bash
+# Start the bot
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the bot
+docker-compose down
+```
+
+## Production Deployment
+
+### Using Docker Compose (Recommended)
+```bash
+# Use production configuration
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Manual Docker Build
+```bash
+# Build the image
+docker build -t 2kcomp-league-bot .
+
+# Run the container
+docker run -d \
+  --name 2kcomp-league-bot \
+  --env-file .env \
+  --restart unless-stopped \
+  -v $(pwd)/data:/app/data \
+  2kcomp-league-bot
+```
+
+## Environment Variables Reference
+
+### Discord Configuration
+- `DISCORD_TOKEN`: Your Discord bot token
+- `GUILD_ID`: Your Discord server ID
+- `ANNOUNCE_CHANNEL_ID`: Channel for announcements
+- `HISTORY_CHANNEL_ID`: Channel for historical records
+
+### SportsPress API
+- `SPORTSPRESS_BASE`: Base URL for SportsPress API
+- `SEASON_ENDPOINTS`: Comma-separated list of season endpoints
+
+### Bot Behavior
+- `POLL_INTERVAL_SECONDS`: How often to check for updates (default: 180)
+- `RECORDS_POLL_INTERVAL_SECONDS`: How often to check records (default: 3600)
+
+### File Paths
+- `STATE_PATH`: Path to state file (default: /data/state.json)
+- `RECORDS_SEED_PATH`: Path to records seed file
+
+## Monitoring and Maintenance
+
+### Health Checks
+The bot includes health check endpoints:
+- HTTP: `http://localhost:8080/health`
+- Docker: Built-in health check
+
+### Logs
+```bash
+# View real-time logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f discord-bot
+```
+
+### Data Persistence
+- Bot state is stored in `./data/state.json`
+- Records are cached in `./data/previous_records.json`
+- Logs are stored in `./data/bot.log`
+
+### Updates
+```bash
+# Pull latest changes
+git pull
+
+# Rebuild and restart
+docker-compose down
+docker-compose up -d --build
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Bot not responding**
+   - Check Discord token is correct
+   - Verify bot has proper permissions in Discord
+   - Check logs for errors
+
+2. **API errors**
+   - Verify SportsPress API endpoints are accessible
+   - Check network connectivity
+   - Review API rate limits
+
+3. **Permission errors**
+   - Ensure bot has required Discord permissions
+   - Check channel IDs are correct
+   - Verify bot is in the correct server
+
+### Debug Mode
+```bash
+# Run with debug logging
+docker-compose -f docker-compose.yml up -d
+docker-compose logs -f discord-bot
+```
+
+## Security Considerations
+
+- Never commit `.env` files to version control
+- Use environment variables for sensitive data
+- Regularly update dependencies
+- Monitor logs for suspicious activity
+- Use non-root user in Docker container
+
+## Backup and Recovery
+
+### Backup Data
+```bash
+# Backup data directory
+tar -czf bot-backup-$(date +%Y%m%d).tar.gz data/
+```
+
+### Restore Data
+```bash
+# Extract backup
+tar -xzf bot-backup-YYYYMMDD.tar.gz
+```
+
+## Support
+
+For issues and questions:
+- Check the logs first
+- Review this deployment guide
+- Create an issue on GitHub
+- Contact the development team
+```
+
+```markdown:discord-bot/CONTRIBUTING.md
+# Contributing to 2KCompLeague Discord Bot
+
+Thank you for your interest in contributing to the 2KCompLeague Discord Bot! This document provides guidelines and information for contributors.
+
+## Getting Started
+
+### Prerequisites
+- Python 3.11+
+- Docker (optional, for containerized development)
+- Git
+- Discord Bot Token (for testing)
+
+### Development Setup
+
+1. **Fork and Clone**
+   ```bash
+   git clone https://github.com/yourusername/2kcomp-league-bot.git
+   cd 2kcomp-league-bot
+   ```
+
+2. **Create Virtual Environment**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
+
+4. **Environment Setup**
+   ```bash
+   cp env.example .env
+   # Edit .env with your configuration
+   ```
+
+## Development Guidelines
+
+### Code Style
+- Follow PEP 8 style guidelines
+- Use type hints where appropriate
+- Keep functions small and focused
+- Add docstrings for all public functions
+
+### Testing
+- Write tests for new features
+- Ensure all tests pass before submitting
+- Aim for good test coverage
+
+```bash
+# Run tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=core --cov=cogs
+```
+
+### Commit Messages
+Use clear, descriptive commit messages:
+```
+feat: add new /player command with detailed stats
+fix: resolve timeout issue in /records command
+docs: update deployment guide with Docker instructions
+```
+
+## Pull Request Process
+
+1. **Create Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make Changes**
+   - Write code following style guidelines
+   - Add tests for new functionality
+   - Update documentation if needed
+
+3. **Test Changes**
+   ```bash
+   # Run tests
+   pytest tests/ -v
+   
+   # Test with Docker (optional)
+   docker-compose up -d
+   ```
+
+4. **Submit Pull Request**
+   - Provide clear description of changes
+   - Reference any related issues
+   - Ensure CI checks pass
+
+## Project Structure
+
+```
+discord-bot/
+├── cogs/                 # Discord bot command modules
+├── core/                 # Core functionality and utilities
+├── data/                 # Persistent data storage
+├── tests/                # Test files
+├── scripts/              # Utility scripts
+├── monitoring/           # Monitoring configuration
+├── bot.py               # Main bot entry point
+├── requirements.txt     # Production dependencies
+├── requirements-dev.txt # Development dependencies
+└── Dockerfile          # Docker configuration
+```
+
+## Command Categories
+
+### Core Commands
+- `/league` - League information
+- `/standings` - Current standings
+- `/player` - Player statistics
+- `/records` - All-time records
+
+### Admin Commands
+- `/admin-announce` - Send announcements
+- `/admin-sync` - Sync commands
+- `/admin-status` - Bot status
+
+### Achievement Commands
+- `/doubledoubles` - Double-double records
+- `/tripledoubles` - Triple-double records
+- `/milestones` - Career milestones
+
+## Adding New Features
+
+### New Commands
+1. Create new cog in `cogs/` directory
+2. Follow existing patterns for command structure
+3. Add proper error handling and logging
+4. Include tests for new functionality
+
+### New Core Features
+1. Add functionality to appropriate `core/` module
+2. Use type hints and proper documentation
+3. Add comprehensive tests
+4. Update configuration if needed
+
+## Bug Reports
+
+When reporting bugs, please include:
+- Description of the issue
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details (Python version, OS, etc.)
+- Relevant log output
+
+## Feature Requests
+
+For feature requests:
+- Describe the feature clearly
+- Explain the use case
+- Consider implementation complexity
+- Check for existing similar features
+
+## Code Review
+
+All submissions require review. Reviewers will check:
+- Code quality and style
+- Test coverage
+- Documentation updates
+- Security considerations
+- Performance impact
+
+## Release Process
+
+1. Update version in `pyproject.toml`
+2. Update `CHANGELOG.md`
+3. Create release tag
+4. Deploy to production
+
+## Contact
+
+- GitHub Issues: For bugs and feature requests
+- Discord: For community discussion
+- Email: For security issues
+
+Thank you for contributing to the 2KCompLeague Discord Bot!
+```
+
+Now let me create a comprehensive README for the GitHub repository:
+
+```markdown:discord-bot/README.md
+# 2KCompLeague Discord Bot
+
+A comprehensive Discord bot for the 2KCompLeague community, providing real-time statistics, records tracking, and league management features integrated with the SportsPress API.
+
+## 🚀 Features
+
+### 📊 Statistics & Records
+- **Player Statistics**: Detailed player cards with rankings and career stats
+- **All-Time Records**: Single-game records with clickable links to games
+- **Double-Doubles & Triple-Doubles**: Achievement tracking and display
+- **Season Leaders**: Current season performance leaders
+- **Career Milestones**: Top performers across all categories
+
+###  League Management
+- **Standings**: Current season standings with team links
+- **Championship History**: Complete league championship hierarchy
+- **Season Scorers**: Historical leading scorers by season
+- **Game Analysis**: Recent game results and highlights
+
+### 🗳️ Community Features
+- **Polling System**: Create and manage community polls
+- **Notifications**: Automated alerts for records and milestones
+- **Spotlight Players**: Automatic player highlights on bot startup
+- **Profile Management**: Profile picture submission system
+
+### 🔧 Admin Tools
+- **Announcements**: Send messages to designated channels
+- **Command Management**: Sync and manage Discord commands
+- **Health Monitoring**: Bot status and system health checks
+- **Data Management**: Persistent state and record tracking
+
+## 🛠️ Quick Start
+
+### Prerequisites
+- Python 3.11+
+- Docker (optional)
+- Discord Bot Token
+- SportsPress API access
+
+### Docker Deployment (Recommended)
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/2kcomp-league-bot.git
+   cd 2kcomp-league-bot
+   ```
+
+2. **Configure environment**
+   ```bash
+   cp env.example .env
+   # Edit .env with your Discord and API credentials
+   ```
+
+3. **Start the bot**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **View logs**
+   ```bash
+   docker-compose logs -f
+   ```
+
+### Local Development
+
+1. **Setup virtual environment**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. **Run the bot**
+   ```bash
+   python bot.py
+   ```
+
+## 📋 Commands
+
+### League Information
+- `/league` - League overview with team links
+- `/standings` - Current season standings
+- `/history` - Championship history
+- `/commands` - List all available commands
+
+### Player & Statistics
+- `/player <name>` - Detailed player statistics and rankings
+- `/scorers` - Season-by-season leading scorers
+- `/leaders` - Current season leaders
+- `/milestones` - Career milestone achievements
+
+### Records & Achievements
+- `/records` - All-time single-game records
+- `/doubledoubles` - Double-double achievements
+- `/tripledoubles` - Triple-double achievements
+
+### Community
+- `/poll <question> <options>` - Create community polls
+- `/notifications` - Notification settings and history
+- `/spotlight` - Manual spotlight player trigger
+
+### Admin (Admin Only)
+- `/admin-announce <message>` - Send announcements
+- `/admin-sync` - Sync Discord commands
+- `/admin-status` - Bot health and status
+- `/admin-clear-commands` - Clear old commands
+
+## ⚙️ Configuration
+
+### Required Environment Variables
+```env
+# Discord Configuration
+DISCORD_TOKEN=your_discord_bot_token_here
+GUILD_ID=your_guild_id_here
+ANNOUNCE_CHANNEL_ID=your_announce_channel_id_here
+HISTORY_CHANNEL_ID=your_history_channel_id_here
+
+# SportsPress API
+SPORTSPRESS_BASE=https://2kcompleague.com/wp-json/sportspress/v2
+```
+
+### Optional Configuration
+```env
+# Bot Behavior
+POLL_INTERVAL_SECONDS=180
+RECORDS_POLL_INTERVAL_SECONDS=3600
+LOG_LEVEL=INFO
+
+# File Paths
+STATE_PATH=/data/state.json
+RECORDS_SEED_PATH=/data/records_seed.json
+```
+
+## ️ Architecture
+
+### Core Components
+- **Bot Engine**: Discord.py-based command system
+- **API Integration**: SportsPress API client with caching
+- **Data Management**: Persistent state and record tracking
+- **Notification System**: Automated alerts and reminders
+- **Health Monitoring**: System health and performance tracking
+
+### Data Flow
+1. **SportsPress API** → **Data Processing** → **Discord Commands**
+2. **Game Events** → **Record Detection** → **Notifications**
+3. **User Interactions** → **Command Processing** → **Response Generation**
+
+## 📊 Monitoring
+
+### Health Checks
+- HTTP endpoint: `http://localhost:8080/health`
+- Docker health check included
+- Comprehensive logging system
+
+### Metrics
+- Command usage statistics
+- API response times
+- Error rates and patterns
+- Performance optimization tracking
+
+## 🔒 Security
+
+- Non-root Docker user
+- Environment variable configuration
+- Input validation and sanitization
+- Rate limiting and error handling
+- Secure API communication
+
+## 📈 Performance
+
+- Async/await architecture
+- HTTP client connection pooling
+- Intelligent caching system
+- Optimized database queries
+- Resource usage monitoring
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Setup
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=core --cov=cogs
+```
+
+##  Documentation
+
+- [Deployment Guide](DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- [Commands Reference](COMMANDS.md) - Detailed command documentation
+- [Features Overview](FEATURES.md) - Comprehensive feature list
+- [API Documentation](API.md) - SportsPress API integration details
+
+## 🐛 Troubleshooting
+
+### Common Issues
+1. **Bot not responding**: Check Discord token and permissions
+2. **API errors**: Verify SportsPress API endpoints
+3. **Command not found**: Use `/admin-sync` to sync commands
+4. **Timeout errors**: Check network connectivity and API status
+
+### Debug Mode
+```bash
+# Enable debug logging
+LOG_LEVEL=DEBUG docker-compose up -d
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+##  Acknowledgments
+
+- **Discord.py** - Discord API wrapper
+- **SportsPress** - WordPress sports management plugin
+- **2KCompLeague Community** - For feedback and testing
+
+## 📞 Support
+
+- **GitHub Issues**: Bug reports and feature requests
+- **Discord**: Community support and discussion
+- **Documentation**: Comprehensive guides and references
+
+---
+
+**Made with ❤️ for the 2KCompLeague community**
+```
+
+Now let me create a production-ready docker-compose file:
+
+```yaml:discord-bot/docker-compose.prod.yml
+version: '3.8'
+
+services:
+  discord-bot:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: 2kcomp-league-bot-prod
+    restart: unless-stopped
+    environment:
+      # Discord Bot Configuration
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - GUILD_ID=${GUILD_ID}
+      - ANNOUNCE_CHANNEL_ID=${ANNOUNCE_CHANNEL_ID}
+      - HISTORY_CHANNEL_ID=${HISTORY_CHANNEL_ID}
+      
+      # SportsPress API Configuration
+      - SPORTSPRESS_BASE=${SPORTSPRESS_BASE}
+      - SEASON_ENDPOINTS=${SEASON_ENDPOINTS}
+      
+      # Production Settings
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - POLL_INTERVAL_SECONDS=${POLL_INTERVAL_SECONDS:-300}
+      - RECORDS_POLL_INTERVAL_SECONDS=${RECORDS_POLL_INTERVAL_SECONDS:-3600}
+      
+      # File Paths
+      - STATE_PATH=/app/data/state.json
+      - RECORDS_SEED_PATH=/app/data/records_seed.json
+      
+      # HTTP Settings
+      - HTTP_TIMEOUT=${HTTP_TIMEOUT:-30}
+      - HTTP_MAX_RETRIES=${HTTP_MAX_RETRIES:-3}
+    
+    volumes:
+      # Persistent data storage
+      - bot-data:/app/data
+      # Environment file
+      - ./.env:/app/.env:ro
+    
+    networks:
+      - bot-network
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # Optional: Add monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: 2kcomp-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - bot-network
+
+  # Optional: Add Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: 2kcomp-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - bot-network
+
+networks:
+  bot-network:
+    driver: bridge
+    name: 2kcomp-league-network
+
+volumes:
+  bot-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+```
+
+Finally, let me create a deployment script:
+
+```bash:discord-bot/scripts/deploy.sh
+#!/bin/bash
+
+# 2KCompLeague Discord Bot Deployment Script
+# This script handles the deployment of the Discord bot to production
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+PROJECT_NAME="2kcomp-league-bot"
+DOCKER_IMAGE="2kcomp-league-bot"
+CONTAINER_NAME="2kcomp-league-bot-prod"
+COMPOSE_FILE="docker-compose.prod.yml"
+
+# Functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if Docker is running
+check_docker() {
+    if ! docker info > /dev/null 2>&1; then
+        log_error "Docker is not running. Please start Docker and try again."
+        exit 1
+    fi
+    log_success "Docker is running"
+}
+
+# Check if required files exist
+check_files() {
+    local required_files=(".env" "Dockerfile" "$COMPOSE_FILE")
+    
+    for file in "${required_files[@]}"; do
+        if [ ! -f "$file" ]; then
+            log_error "Required file $file not found"
+            exit 1
+        fi
+    done
+    log_success "All required files found"
+}
+
+# Backup existing data
+backup_data() {
+    if [ -d "data" ]; then
+        log_info "Creating backup of existing data..."
+        timestamp=$(date +%Y%m%d_%H%M%S)
+        tar -czf "backup_${timestamp}.tar.gz" data/
+        log_success "Backup created: backup_${timestamp}.tar.gz"
+    fi
+}
+
+# Pull latest changes
+pull_changes() {
+    log_info "Pulling latest changes from Git..."
+    git pull origin main
+    log_success "Latest changes pulled"
+}
+
+# Build Docker image
+build_image() {
+    log_info "Building Docker image..."
+    docker build -t "$DOCKER_IMAGE:latest" .
+    log_success "Docker image built successfully"
+}
+
+# Stop existing containers
+stop_containers() {
+    log_info "Stopping existing containers..."
+    docker-compose -f "$COMPOSE_FILE" down || true
+    log_success "Existing containers stopped"
+}
+
+# Start new containers
+start_containers() {
+    log_info "Starting new containers..."
+    docker-compose -f "$COMPOSE_FILE" up -d
+    log_success "Containers started successfully"
+}
+
+# Wait for health check
+wait_for_health() {
+    log_info "Waiting for bot to be healthy..."
+    local max_attempts=30
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        if docker-compose -f "$COMPOSE_FILE" ps | grep -q "healthy"; then
+            log_success "Bot is healthy and ready"
+            return 0
+        fi
+        
+        log_info "Attempt $attempt/$max_attempts - Bot not ready yet, waiting..."
+        sleep 10
+        ((attempt++))
+    done
+    
+    log_warning "Bot health check timed out, but deployment may still be successful"
+}
+
+# Show logs
+show_logs() {
+    log_info "Showing recent logs..."
+    docker-compose -f "$COMPOSE_FILE" logs --tail=50
+}
+
+# Cleanup old images
+cleanup() {
+    log_info "Cleaning up old Docker images..."
+    docker image prune -f
+    log_success "Cleanup completed"
+}
+
+# Main deployment function
+deploy() {
+    log_info "Starting deployment of $PROJECT_NAME..."
+    
+    check_docker
+    check_files
+    backup_data
+    pull_changes
+    build_image
+    stop_containers
+    start_containers
+    wait_for_health
+    show_logs
+    cleanup
+    
+    log_success "Deployment completed successfully!"
+    log_info "Bot should be running and ready to use"
+}
+
+# Rollback function
+rollback() {
+    log_info "Rolling back to previous version..."
+    
+    # Find the most recent backup
+    local latest_backup=$(ls -t backup_*.tar.gz 2>/dev/null | head -n1)
+    
+    if [ -z "$latest_backup" ]; then
+        log_error "No backup files found for rollback"
+        exit 1
+    fi
+    
+    log_info "Using backup: $latest_backup"
+    
+    # Stop current containers
+    stop_containers
+    
+    # Restore data
+    if [ -d "data" ]; then
+        rm -rf data
+    fi
+    tar -xzf "$latest_backup"
+    
+    # Start containers with previous version
+    start_containers
+    wait_for_health
+    
+    log_success "Rollback completed successfully"
+}
+
+# Show usage
+usage() {
+    echo "Usage: $0 [deploy|rollback|status|logs]"
+    echo ""
+    echo "Commands:"
+    echo "  deploy   - Deploy the bot to production"
+    echo "  rollback - Rollback to previous version"
+    echo "  status   - Show deployment status"
+    echo "  logs     - Show bot logs"
+    echo ""
+}
+
+# Show status
+show_status() {
+    log_info "Deployment Status:"
+    docker-compose -f "$COMPOSE_FILE" ps
+}
+
+# Show logs
+show_logs_only() {
+    docker-compose -f "$COMPOSE_FILE" logs -f
+}
+
+# Main script logic
+case "${1:-deploy}" in
+    deploy)
+        deploy
+        ;;
+    rollback)
+        rollback
+        ;;
+    status)
+        show_status
+        ;;
+    logs)
+        show_logs_only
+        ;;
+    *)
+        usage
+        exit 1
+        ;;
+esac
+```
+
+Now let me create a GitHub Actions workflow for automated deployment:
+
+```yaml:discord-bot/.github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/2kcomp-league-bot
+          git pull origin main
+          docker-compose -f docker-compose.prod.yml down
+          docker-compose -f docker-compose.prod.yml pull
+          docker-compose -f docker-compose.prod.yml up -d
+          docker system prune -f
+```
+
+## 🚀 GitHub Repository Setup Instructions
+
+Here's how to upload your bot to GitHub and set up Docker deployment:
+
+### 1. **Create GitHub Repository**
+```bash
+# Initialize git repository
+cd discord-bot
+git init
+git add .
+git commit -m "Initial commit: 2KCompLeague Discord Bot"
+
+# Create repository on GitHub (via web interface)
+# Then connect and push
+git remote add origin https://github.com/yourusername/2kcomp-league-bot.git
+git branch -M main
+git push -u origin main
+```
+
+### 2. **Set up Environment Variables**
+Create a `.env` file with your actual values:
+```env
+# Discord Configuration
+DISCORD_TOKEN=your_actual_discord_bot_token
+GUILD_ID=your_actual_guild_id
+ANNOUNCE_CHANNEL_ID=your_announce_channel_id
+HISTORY_CHANNEL_ID=your_history_channel_id
+
+# SportsPress API
+SPORTSPRESS_BASE=https://2kcompleague.com/wp-json/sportspress/v2
+SEASON_ENDPOINTS=/players?league=nba2k26s1,/players?league=nba2k25s6,/players?league=nba2k25s5
+```
+
+### 3. **Deploy with Docker**
+```bash
+# Make deployment script executable
+chmod +x scripts/deploy.sh
+
+# Deploy to production
+./scripts/deploy.sh deploy
+
+# Or use docker-compose directly
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 4. **Monitor Deployment**
+```bash
+# Check status
+./scripts/deploy.sh status
+
+# View logs
+./scripts/deploy.sh logs
+
+# Check health
+docker-compose -f docker-compose.prod.yml ps
+```
+
+## 📋 Repository Structure
+
+Your GitHub repository will include:
+- ✅ **Docker Configuration**: Dockerfile, docker-compose files
+- ✅ **CI/CD Pipeline**: GitHub Actions for testing and deployment
+- ✅ **Documentation**: Comprehensive README, deployment guides
+- ✅ **Security**: .gitignore, environment variable management
+- ✅ **Monitoring**: Health checks, logging, performance tracking
+- ✅ **Development Tools**: Testing, linting, code quality checks
+
+## 🎯 Next Steps
+
+1. **Upload to GitHub**: Follow the git commands above
+2. **Configure Secrets**: Add your Discord token and API keys to GitHub Secrets
+3. **Deploy**: Use the deployment script or Docker Compose
+4. **Monitor**: Check logs and health status
+5. **Scale**: Add monitoring with Prometheus/Grafana if needed
+
+Your bot is now ready for production deployment with a professional setup! 🚀
+```
+

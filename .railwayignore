@@ -1,0 +1,58 @@
+# Ignore files for Railway deployment
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Documentation
+*.md
+docs/
+
+# Docker files (we're using Railway's Docker build)
+docker-compose*.yml
+Dockerfile.prod
+
+# Data files (will be created at runtime)
+data/
+*.json
+!requirements.txt
+!pyproject.toml
