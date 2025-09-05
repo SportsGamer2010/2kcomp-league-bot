@@ -60,7 +60,14 @@ def setup_logging() -> None:
     """Setup logging configuration."""
     # Create logs directory if it doesn't exist
     log_file = Path(settings.LOG_FILE)
-    log_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Try to create the directory, fallback to /tmp if permission denied
+    try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        logger.warning(f"Permission denied for {log_file.parent}, using /tmp/data")
+        log_file = Path("/tmp/data") / log_file.name
+        log_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Configure root logger
     root_logger = logging.getLogger()

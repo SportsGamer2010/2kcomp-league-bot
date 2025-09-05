@@ -14,6 +14,7 @@ HISTORY_CHANNEL_ID=your_history_channel_id
 ```env
 STATE_PATH=/tmp/data/state.json
 RECORDS_SEED_PATH=/tmp/data/records_seed.json
+LOG_FILE=/tmp/data/bot.log
 ```
 
 ## Optional Variables:

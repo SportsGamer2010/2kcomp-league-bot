@@ -59,7 +59,7 @@ class Settings(BaseSettings):
 
     # Logging settings
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
-    LOG_FILE: str = Field(default="/data/bot.log", description="Log file path")
+    LOG_FILE: str = Field(default="/tmp/data/bot.log", description="Log file path")
 
     class Config:
         env_file = ".env"
