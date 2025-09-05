@@ -22,7 +22,7 @@ class StateManager:
         try:
             self.state_path.parent.mkdir(parents=True, exist_ok=True)
         except PermissionError:
-            logger.warning(f"Permission denied for {self.state_path.parent}, using /tmp/data")
+            print(f"WARNING: Permission denied for {self.state_path.parent}, using /tmp/data")
             self.state_path = Path("/tmp/data") / self.state_path.name
             self.state_path.parent.mkdir(parents=True, exist_ok=True)
 

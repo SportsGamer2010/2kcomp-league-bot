@@ -65,7 +65,7 @@ def setup_logging() -> None:
     try:
         log_file.parent.mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        logger.warning(f"Permission denied for {log_file.parent}, using /tmp/data")
+        print(f"WARNING: Permission denied for {log_file.parent}, using /tmp/data")
         log_file = Path("/tmp/data") / log_file.name
         log_file.parent.mkdir(parents=True, exist_ok=True)
 
