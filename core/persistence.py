@@ -17,7 +17,14 @@ class StateManager:
 
     def __init__(self, state_path: Optional[str] = None):
         self.state_path = Path(state_path or settings.STATE_PATH)
-        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Try to create the directory, fallback to /tmp if permission denied
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            logger.warning(f"Permission denied for {self.state_path.parent}, using /tmp/data")
+            self.state_path = Path("/tmp/data") / self.state_path.name
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
 
     def load_state(self) -> BotState:
         """
@@ -213,8 +220,15 @@ class StateManager:
             return False
 
 
-# Global state manager instance
-state_manager = StateManager()
+# Global state manager instance (lazy initialization)
+state_manager = None
+
+def get_state_manager() -> StateManager:
+    """Get or create the global state manager instance."""
+    global state_manager
+    if state_manager is None:
+        state_manager = StateManager()
+    return state_manager
 
 
 def load_bot_state() -> BotState:
@@ -224,7 +238,7 @@ def load_bot_state() -> BotState:
     Returns:
         BotState instance
     """
-    return state_manager.load_state()
+    return get_state_manager().load_state()
 
 
 def save_bot_state(state: BotState) -> bool:
@@ -237,7 +251,7 @@ def save_bot_state(state: BotState) -> bool:
     Returns:
         True if save was successful
     """
-    return state_manager.save_state(state)
+    return get_state_manager().save_state(state)
 
 
 def update_leaders_in_state(leaders: LeadersData) -> bool:
@@ -250,7 +264,7 @@ def update_leaders_in_state(leaders: LeadersData) -> bool:
     Returns:
         True if update was successful
     """
-    return state_manager.update_leaders(leaders)
+    return get_state_manager().update_leaders(leaders)
 
 
 def update_milestones_in_state(
@@ -267,7 +281,7 @@ def update_milestones_in_state(
     Returns:
         True if update was successful
     """
-    return state_manager.update_milestones(last_totals, milestones_sent)
+    return get_state_manager().update_milestones(last_totals, milestones_sent)
 
 
 def get_last_leaders_from_state() -> LeadersData:
@@ -277,7 +291,7 @@ def get_last_leaders_from_state() -> LeadersData:
     Returns:
         LeadersData instance
     """
-    return state_manager.get_last_leaders()
+    return get_state_manager().get_last_leaders()
 
 
 def get_milestone_state_from_persistence() -> (
@@ -289,7 +303,7 @@ def get_milestone_state_from_persistence() -> (
     Returns:
         Tuple of (last_totals, milestones_sent)
     """
-    return state_manager.get_milestone_state()
+    return get_state_manager().get_milestone_state()
 
 
 def create_state_backup() -> bool:
@@ -299,7 +313,7 @@ def create_state_backup() -> bool:
     Returns:
         True if backup was successful
     """
-    return state_manager.backup_state()
+    return get_state_manager().backup_state()
 
 
 def cleanup_state_backups() -> bool:
@@ -309,4 +323,4 @@ def cleanup_state_backups() -> bool:
     Returns:
         True if cleanup was successful
     """
-    return state_manager.cleanup_old_backups()
+    return get_state_manager().cleanup_old_backups()
