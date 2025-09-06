@@ -334,6 +334,14 @@ async def main():
         # Set up HTTP client
         await setup_http_client()
         
+        # Debug token information
+        token = settings.DISCORD_TOKEN
+        logger.info(f"Token length: {len(token) if token else 'None'}")
+        logger.info(f"Token starts with: {token[:5] if token and len(token) > 5 else 'None'}")
+        logger.info(f"Token contains dots: {'.' in token if token else 'None'}")
+        logger.info(f"Token has spaces: {' ' in token if token else 'None'}")
+        logger.info(f"Token has quotes: {'"' in token or "'" in token if token else 'None'}")
+        
         # Start the bot
         logger.info("Starting Discord bot...")
         await bot.start(settings.DISCORD_TOKEN)
